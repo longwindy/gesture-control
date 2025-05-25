@@ -1,2 +1,2 @@
 # gesture-control
-A gesture control based on computer vision
+A gesture control tool based on computer vision
