@@ -1,10 +1,10 @@
 import cv2
 import cvzone
 import numpy as np
-from config import buttonColor, textColor
+from config import buttonColor, textColor, button_size
 
 class Button():
-    def __init__(self, pos, text, size=[85, 85]):
+    def __init__(self, pos, text, size=button_size):
         self.pos = pos
         self.text = text
         self.size = size
