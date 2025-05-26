@@ -1,6 +1,7 @@
 import cv2
 import cvzone
 import numpy as np
+from config import buttonColor, textColor
 
 class Button():
     def __init__(self, pos, text, size=[85, 85]):
@@ -8,7 +9,7 @@ class Button():
         self.text = text
         self.size = size
 
-    def draw(self, img, buttonColor=(210, 146, 192), textColor=(255, 255, 255), fontScale=4, thickness=4):
+    def draw(self, img, buttonColor=buttonColor, textColor=textColor, fontScale=4, thickness=4):
         x, y = self.pos
         w, h = self.size
         cvzone.cornerRect(img, (x, y, w, h), 20, rt=3)

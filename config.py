@@ -41,3 +41,19 @@ button_size = [85, 85]
 # Button interval (pixels)
 # Default: 15
 button_interval = 15
+
+# Button color (RGB)
+# Default: (255, 0, 255)
+buttonColor = (210, 146, 192)
+
+# Text color (RGB)
+# Default: (255, 255, 255)
+textColor = (255, 255, 255)
+
+# Button hovor color (RGB)
+# Default: (175, 0, 175)
+buttonHoverColor = (175, 0, 175)
+
+# Button click color (RGB)
+# Default: (0, 255, 0)
+buttonClickColor = (0, 255, 0)

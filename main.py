@@ -23,10 +23,10 @@ finalText = ""
 def drawAll(img, buttonList):
     imgNew = np.zeros_like(img, np.uint8)
     for button in buttonList:
-        button.draw(imgNew, buttonColor=(255, 0, 255), textColor=(255, 255, 255), fontScale=2, thickness=3)
+        button.draw(imgNew, buttonColor=buttonColor, textColor=textColor, fontScale=2, thickness=3)
     
     cv2.rectangle(imgNew, (50, 550), (700, 650), (210, 146, 192), cv2.FILLED)
-    cv2.putText(imgNew, finalText, (60, 625), cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+    cv2.putText(imgNew, finalText, (60, 625), cv2.FONT_HERSHEY_PLAIN, 5, textColor, 5)
 
     out = img.copy()
     alpha = 0.5
@@ -78,13 +78,13 @@ while True:
             w, h = button.size
             
             if x < lmList[indexLm][0] < x + w and y < lmList[indexLm][1] < y + h:
-                button.draw(img, buttonColor=(175, 0, 175), textColor=(255, 255, 255), fontScale=4, thickness=4)
+                button.draw(img, buttonColor=buttonHoverColor, textColor=textColor, fontScale=4, thickness=4)
 
                 ## When clicked
                 if isClicked(lmList, indexLm, clickLm):
                     last_click_time = time.time()
                     keyboard.press(button.text)
-                    button.draw(img, buttonColor=(0, 255, 0), textColor=(255, 255, 255), fontScale=4, thickness=4)
+                    button.draw(img, buttonColor=buttonClickColor, textColor=textColor, fontScale=4, thickness=4)
                     finalText += button.text
     
     cv2.imshow("Image", img)
