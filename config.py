@@ -20,6 +20,14 @@ click_interval = 1
 # Default: 0
 click_mode = 1
 
+# Dynamic scale for click detection (recommand: 0.0 - 0.2)
+# Default: 0.15
+dynamic_scale = 0.15
+
+# Display scale (0 - 1.0)
+# default: 0.95
+display_scale = 0.95
+
 # Debug mode (True/False)
 # Default: False
 debugMode = True
@@ -35,8 +43,8 @@ keyboard_start_x = 50
 keyboard_start_y = 75
 
 # Button size [width, height] (pixels)
-# Default: [85, 85]
-button_size = [85, 85]
+# Default: [70, 70]
+button_size = [70, 70]
 
 # Button interval (pixels)
 # Default: 15

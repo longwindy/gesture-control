@@ -35,12 +35,15 @@ def drawAll(img, buttonList):
     return out
 
 # Check if the button is clicked
-def isClicked(lmList, indexLm, clickLm, clickThreshold=45, click_interval=click_interval):
+def isClicked(lmList, indexLm, clickLm, bboxInfo, dynamic_scale=0.08, click_interval=click_interval):
     x1, y1 = lmList[indexLm][0], lmList[indexLm][1]
     x2, y2 = lmList[clickLm][0], lmList[clickLm][1]
+
+    clickThreshold = 5 + (bboxInfo[2] + bboxInfo[3]) * dynamic_scale
+    
     l, _, _ = detector.findDistance((x1, y1), (x2, y2), img)
-    if debugMode:
-        print(l)
+    # if debugMode:
+    #     print(f"distance: {l:.2f} ")
     return l < clickThreshold and time.time() - last_click_time >= click_interval
 
 # Initialization
@@ -66,27 +69,43 @@ init()
 while True:
     success, img = cap.read()
     img = cv2.flip(img, 1)
+
     hands, img = detector.findHands(img, draw=True, flipType=False)
     lmList, bboxInfo = [], []
     if hands:
         lmList, bboxInfo = hands[0]["lmList"], hands[0]["bbox"]
     img = drawAll(img, buttonList)
 
+    if bboxInfo and debugMode:
+        l, _, _ = detector.findDistance((lmList[indexLm][0], lmList[indexLm][1]), (lmList[clickLm][0], lmList[clickLm][1]), img)
+        bboxWidth = bboxInfo[2]
+        bboxHeight = bboxInfo[3]
+        sum = bboxInfo[2]+bboxInfo[3]
+        print(f"boxWidth: {bboxWidth} boxHeight: {bboxHeight} sum: {sum} distance: {l:.2f} rate: {l/sum:.3f}")
+
     if lmList:
+        midPoint = ((lmList[indexLm][0]+lmList[clickLm][0])//2, (lmList[indexLm][1]+lmList[clickLm][1])//2)
+        
         for button in buttonList:
             x, y = button.pos
             w, h = button.size
             
-            if x < lmList[indexLm][0] < x + w and y < lmList[indexLm][1] < y + h:
+            if x < midPoint[0] < x + w and y < midPoint[1] < y + h:
                 button.draw(img, buttonColor=buttonHoverColor, textColor=textColor, fontScale=4, thickness=4)
 
                 ## When clicked
-                if isClicked(lmList, indexLm, clickLm):
+                if isClicked(lmList, indexLm, clickLm, bboxInfo):
                     last_click_time = time.time()
                     keyboard.press(button.text)
                     button.draw(img, buttonColor=buttonClickColor, textColor=textColor, fontScale=4, thickness=4)
                     finalText += button.text
+
+        cv2.circle(img, midPoint, 8, (255, 255, 255), 2)
     
+    w,h = img.shape[:2]
+    display_w, display_h = int(w * display_scale), int(h * display_scale)
+    x1, y1 = (w - display_w) // 2, (h - display_h) // 2
+    img = img[x1:x1+display_w, y1:y1+display_h]
     cv2.imshow("Image", img)
     cv2.waitKey(1)
 
