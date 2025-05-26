@@ -37,3 +37,7 @@ keyboard_start_y = 75
 # Button size [width, height] (pixels)
 # Default: [85, 85]
 button_size = [85, 85]
+
+# Button interval (pixels)
+# Default: 15
+button_interval = 15
