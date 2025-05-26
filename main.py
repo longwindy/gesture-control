@@ -11,7 +11,7 @@ from config import *
 ## Global variables
 last_click_time = 0
 indexLm = 8
-clickLm = 12
+clickLm = 4
 buttonList = []
 
 keyboard = Controller()
