@@ -20,6 +20,10 @@ click_interval = 1
 # Default: 0
 click_mode = 1
 
+# switch delay (seconds)
+# Default: 0.3
+switch_delay = 0.3
+
 # Dynamic scale for click detection (recommand: 0.0 - 0.2)
 # Default: 0.15
 dynamic_scale = 0.15
