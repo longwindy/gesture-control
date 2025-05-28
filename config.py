@@ -25,8 +25,8 @@ click_mode = 1
 dynamic_scale = 0.15
 
 # Display scale (0 - 1.0)
-# default: 0.95
-display_scale = 0.95
+# default: 1.0
+display_scale = 1.0
 
 # Debug mode (True/False)
 # Default: False
