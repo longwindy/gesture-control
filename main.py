@@ -35,7 +35,7 @@ def drawAll(img, buttonList):
     return out
 
 # Check if the button is clicked
-def isClicked(lmList, indexLm, clickLm, bboxInfo, dynamic_scale=0.08, click_interval=click_interval):
+def isClicked(lmList, indexLm, clickLm, bboxInfo, dynamic_scale=0.08, click_interval=1):
     x1, y1 = lmList[indexLm][0], lmList[indexLm][1]
     x2, y2 = lmList[clickLm][0], lmList[clickLm][1]
 
