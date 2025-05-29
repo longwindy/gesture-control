@@ -7,6 +7,7 @@ from button import Button
 import keyboardConfig
 from config import *
 import autopy
+import ctypes
 from algorithm_setting import *
 
 # Global variables
@@ -16,7 +17,8 @@ indexLm = 8
 clickLm = 4
 buttonList = []
 fingers_up = []
-wScr, hScr = autopy.screen.size()
+wScr, hScr = autopy.screen.size()   # Need repair
+# wScr, hScr = ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)
 pLocx, pLocy = 0, 0
 cLocx, cLocy = 0, 0
 prev_x1, prev_y1 = 0, 0
@@ -49,7 +51,7 @@ def isClicked(lmList, indexLm, clickLm, bboxInfo, img, dynamic_scale=0.08, click
     x1, y1 = lmList[indexLm][0], lmList[indexLm][1]
     x2, y2 = lmList[clickLm][0], lmList[clickLm][1]
 
-    clickThreshold = 5 + (bboxInfo[2] + bboxInfo[3]) * dynamic_scale
+    clickThreshold = 25 + (bboxInfo[2] + bboxInfo[3]) * dynamic_scale
     l, _, _ = detector.findDistance((x1, y1), (x2, y2), img)
     return l < clickThreshold and time.time() - last_click_time >= click_interval
 
@@ -158,7 +160,7 @@ if __name__ == "__main__":
                 bboxWidth = bboxInfo[2]
                 bboxHeight = bboxInfo[3]
                 sum_val = bboxInfo[2] + bboxInfo[3]
-                print(f"boxWidth: {bboxWidth} boxHeight: {bboxHeight} sum: {sum_val} distance: {l:.2f} rate: {l/sum_val:.3f}")
+                # print(f"boxWidth: {bboxWidth} boxHeight: {bboxHeight} sum: {sum_val} distance: {l:.2f} rate: {l/sum_val:.3f} threshold: {(5+sum_val*0.08):.2f}")
 
             if current_mode == 0:
                 # Draw the rectangle on the screen
@@ -224,12 +226,16 @@ if __name__ == "__main__":
 
                         # Click the button only when the index finger and middle finger are up
                         if isClicked(lmList, indexLm, clickLm, bboxInfo, img) and fingers_up[0] and fingers_up[1]:
+                            if debugMode:
+                                print("Clicked:", button.text)
                             last_click_time = time.time()
-                            keyboard.press(button.text)
+                            if button.action:
+                                for func in button.action:
+                                    func()
                             button.draw(img, buttonColor=buttonClickColor, textColor=textColor, fontScale=4, thickness=4)
                             finalText += button.text
 
                 cv2.circle(img, midPoint, 8, (255, 255, 255), 2)
       
-        cv2.imshow(f"Image{actual_width}", img)
+        cv2.imshow(f"Image", img)
         cv2.waitKey(1)

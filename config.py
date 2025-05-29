@@ -72,3 +72,7 @@ buttonHoverColor = (175, 0, 175)
 # Button click color (RGB)
 # Default: (0, 255, 0)
 buttonClickColor = (0, 255, 0)
+
+# Caps lock status (True/False)
+# Default: False
+caps_lock = False
