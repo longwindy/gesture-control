@@ -24,6 +24,9 @@ click_mode = 1
 # Default: 0.3
 switch_delay = 0.3
 
+# Static threshold for click detection (recommand: 3)
+STATIC_THRESHOLD = 3
+
 # Dynamic scale for click detection (recommand: 0.0 - 0.2)
 # Default: 0.15
 dynamic_scale = 0.15
