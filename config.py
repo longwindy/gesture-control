@@ -24,9 +24,6 @@ click_mode = 1
 # Default: 0.3
 switch_delay = 0.3
 
-# Static threshold for click detection (recommand: 3)
-STATIC_THRESHOLD = 3
-
 # Dynamic scale for click detection (recommand: 0.0 - 0.2)
 # Default: 0.15
 dynamic_scale = 0.15
@@ -73,6 +70,10 @@ buttonHoverColor = (175, 0, 175)
 # Default: (0, 255, 0)
 buttonClickColor = (0, 255, 0)
 
+### Global parameters
+
 # Caps lock status (True/False)
-# Default: False
-caps_lock = False
+CAPS_LOCK = False
+
+# Static threshold for click detection (recommand: 3)
+STATIC_THRESHOLD = 3
