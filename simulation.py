@@ -1,24 +1,32 @@
+# Simulate gesture-controlled mouse and evaluate algorithms
 import numpy as np
 import matplotlib.pyplot as plt
-from algorithm_setting import lowpass_filter, init_kalman_filter, moving_average, PerformanceEvaluator
+from algorithm_setting import LowPassFilter, ExtendedKalmanFilterWrapper, MovingAverageFilter, KalmanFilterWrapper, PerformanceEvaluator
 
-# Generate more realistic simulated gesture data
-def generate_simulation_data(num_points=1000):
-    t = np.linspace(0, 10, num_points)
+# Generate simulation data at 30fps (600 frames = 20 seconds), simulating gesture acceleration and lighting effects
+def generate_simulation_data(num_points=600):  # Modified to 30fps
+    t = np.linspace(0, 20, num_points)
     
-    # Generate more complex true trajectory
-    x_true = 100 * np.sin(0.5 * t) + 50 * np.cos(1.5 * t)
-    y_true = 100 * np.cos(0.5 * t) + 50 * np.sin(1.5 * t)
+    # Generate a non-linear trajectory (Lissajous curve) with acceleration information added
+    acceleration = 0.1 * np.sin(0.2 * t)  # Simulate acceleration
+    x_true = 100 * np.sin(0.5 * t) + 50 * np.cos(2.0 * t) + 0.5 * acceleration * t**2
+    y_true = 100 * np.cos(0.8 * t) + 50 * np.sin(1.2 * t) + 0.5 * acceleration * t**2
     
-    # Introduce dynamic noise
-    noise_std = 2 + 3 * np.sin(0.2 * t)
+    # Dynamic noise (increases with velocity)
+    velocity = np.sqrt(np.diff(x_true)**2 + np.diff(y_true)**2)
+    velocity = np.append(velocity, velocity[-1])
+
+    # Simulate lighting changes
+    light_intensity = 0.7 + 0.3 * np.sin(0.3 * t)  # Light intensity varies between 0.4 and 1.0
+    light_factor = np.clip(1.5 - light_intensity, 0.5, 1.5)  # More noise in low light
+
+    noise_std = (1 + 0.1 * velocity) * light_factor
     
-    # Simulate pauses in gesture movement
+    # Simulate pauses (gesture stops)
     pause_mask = np.zeros(num_points, dtype=bool)
-    pause_length = 20
-    pause_start = [200, 500, 800]
-    for start in pause_start:
-        pause_mask[start:start + pause_length] = True
+    pause_starts = [80, 180, 250]  # Pause frames at 30fps
+    for start in pause_starts:
+        pause_mask[start:start+15] = True  # 0.5-second pause
     
     x_noisy = x_true.copy()
     y_noisy = y_true.copy()
@@ -27,61 +35,73 @@ def generate_simulation_data(num_points=1000):
             x_noisy[i] += np.random.normal(0, noise_std[i])
             y_noisy[i] += np.random.normal(0, noise_std[i])
         else:
-            x_noisy[i] = x_noisy[i - 1] if i > 0 else x_true[i]
-            y_noisy[i] = y_noisy[i - 1] if i > 0 else y_true[i]
+            if i > 0:
+                x_noisy[i] = x_noisy[i-1]
+                y_noisy[i] = y_noisy[i-1]
     
-    return x_noisy, y_noisy
+    return x_noisy, y_noisy, light_intensity
 
-# Simulate gesture-controlled mouse and evaluate algorithms
+# Simulate gesture control
 def simulate_gesture_control():
-    x_noisy, y_noisy = generate_simulation_data()
+    x_noisy, y_noisy, light_intensity = generate_simulation_data()
     evaluator = PerformanceEvaluator()
-    kf = init_kalman_filter()
-    ma_history_x = []
-    ma_history_y = []
-    pLocx, pLocy = 0, 0
+    
+    # Initialize filters
+    lowpass_filter_x = LowPassFilter()
+    lowpass_filter_y = LowPassFilter()
+    ekf = ExtendedKalmanFilterWrapper(dt=1/30.0)
+    moving_avg_filter_x = MovingAverageFilter()
+    moving_avg_filter_y = MovingAverageFilter()
+    kf = KalmanFilterWrapper(dt=1/30.0)
 
-    # Store trajectory data
-    lowpass_x = []
-    lowpass_y = []
-    kalman_x = []
-    kalman_y = []
-    moving_avg_x = []
-    moving_avg_y = []
+    # Store trajectories
+    lowpass_x, lowpass_y = [], []
+    ekf_x, ekf_y = [], []
+    moving_avg_x, moving_avg_y = [], []
+    kf_x, kf_y = [], []
 
     for i in range(len(x_noisy)):
         x3, y3 = x_noisy[i], y_noisy[i]
 
-        # Low-pass filtering
-        x_data = np.array([pLocx, x3])
-        y_data = np.array([pLocy, y3])
-        lp_x, lp_y = lowpass_filter(x_data)[-1], lowpass_filter(y_data)[-1]
+        # Low-pass filter
+        lp_x = lowpass_filter_x.filter(x3)
+        lp_y = lowpass_filter_y.filter(y3)
         lp_error = np.sqrt((lp_x - x3)**2 + (lp_y - y3)**2)
         evaluator.record('lowpass', (lp_x, lp_y), lp_error)
         lowpass_x.append(lp_x)
         lowpass_y.append(lp_y)
 
-        # Kalman filtering
-        z = np.array([[x3], [y3]])
-        kf.predict()
-        kf.update(z)
-        kf_x, kf_y = kf.x[0], kf.x[1]
-        kf_error = np.sqrt((kf_x - x3)**2 + (kf_y - y3)**2)
-        evaluator.record('kalman', (kf_x, kf_y), kf_error)
-        kalman_x.append(kf_x)
-        kalman_y.append(kf_y)
+        # Extended Kalman filter
+        ekf.predict()
+        z = np.array([x3, y3])
+        ekf.update(z)
+        ekf_state = ekf.get_state()
+        ekf_x_val, ekf_y_val = ekf_state[0], ekf_state[1]
+        ekf_error = np.sqrt((ekf_x_val - x3)**2 + (ekf_y_val - y3)**2)
+        evaluator.record('ekf', (ekf_x_val, ekf_y_val), ekf_error)
+        ekf_x.append(ekf_x_val)
+        ekf_y.append(ekf_y_val)
 
         # Moving average
-        ma_x = moving_average(ma_history_x, x3)
-        ma_y = moving_average(ma_history_y, y3)
+        ma_x = moving_avg_filter_x.filter(x3)
+        ma_y = moving_avg_filter_y.filter(y3)
         ma_error = np.sqrt((ma_x - x3)**2 + (ma_y - y3)**2)
         evaluator.record('moving_avg', (ma_x, ma_y), ma_error)
         moving_avg_x.append(ma_x)
         moving_avg_y.append(ma_y)
 
-        pLocx, pLocy = kf_x, kf_y
+        # Standard Kalman filter
+        kf.predict()
+        z_kf = np.array([x3, y3])
+        kf.update(z_kf)
+        kf_state = kf.get_state()
+        kf_x_val, kf_y_val = kf_state[0], kf_state[1]
+        kf_error = np.sqrt((kf_x_val - x3)**2 + (kf_y_val - y3)**2)
+        evaluator.record('kf', (kf_x_val, kf_y_val), kf_error)
+        kf_x.append(kf_x_val)
+        kf_y.append(kf_y_val)
 
-    return evaluator, x_noisy, y_noisy, lowpass_x, lowpass_y, kalman_x, kalman_y, moving_avg_x, moving_avg_y
+    return evaluator, x_noisy, y_noisy, lowpass_x, lowpass_y, ekf_x, ekf_y, moving_avg_x, moving_avg_y, kf_x, kf_y, light_intensity
 
 # Plot performance metrics
 def plot_metrics(evaluator):
@@ -125,12 +145,14 @@ def plot_metrics(evaluator):
     plt.show()
 
 # Plot trajectory comparison
-def plot_trajectories(x_noisy, y_noisy, lowpass_x, lowpass_y, kalman_x, kalman_y, moving_avg_x, moving_avg_y):
+def plot_trajectories(x_noisy, y_noisy, lowpass_x, lowpass_y, ekf_x, ekf_y, moving_avg_x, moving_avg_y, kf_x, kf_y):
     plt.figure(figsize=(10, 6))
     plt.plot(x_noisy, y_noisy, label='Noisy Data', alpha=0.7)
     plt.plot(lowpass_x, lowpass_y, label='Lowpass Filter', alpha=0.7)
-    plt.plot(kalman_x, kalman_y, label='Kalman Filter', alpha=0.7)
+    # Explicitly specify the line color for the Extended Kalman Filter as purple
+    plt.plot(ekf_x, ekf_y, label='Extended Kalman Filter', alpha=0.7, color='purple')
     plt.plot(moving_avg_x, moving_avg_y, label='Moving Average', alpha=0.7)
+    plt.plot(kf_x, kf_y, label='Kalman Filter', alpha=0.7)
     plt.title('Trajectory Comparison')
     plt.xlabel('X Coordinate')
     plt.ylabel('Y Coordinate')
@@ -138,7 +160,20 @@ def plot_trajectories(x_noisy, y_noisy, lowpass_x, lowpass_y, kalman_x, kalman_y
     plt.grid(True)
     plt.show()
 
+# Plot light intensity variation
+def plot_light_intensity(light_intensity):
+    t = np.linspace(0, 10, len(light_intensity))
+    plt.figure(figsize=(10, 6))
+    plt.plot(t, light_intensity, label='Light Intensity')
+    plt.title('Light Intensity Variation')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Light Intensity')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
 if __name__ == "__main__":
-    evaluator, x_noisy, y_noisy, lowpass_x, lowpass_y, kalman_x, kalman_y, moving_avg_x, moving_avg_y = simulate_gesture_control()
+    evaluator, x_noisy, y_noisy, lowpass_x, lowpass_y, ekf_x, ekf_y, moving_avg_x, moving_avg_y, kf_x, kf_y, light_intensity = simulate_gesture_control()
     plot_metrics(evaluator)
-    plot_trajectories(x_noisy, y_noisy, lowpass_x, lowpass_y, kalman_x, kalman_y, moving_avg_x, moving_avg_y)
+    plot_trajectories(x_noisy, y_noisy, lowpass_x, lowpass_y, ekf_x, ekf_y, moving_avg_x, moving_avg_y, kf_x, kf_y)
+    plot_light_intensity(light_intensity)
