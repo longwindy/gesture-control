@@ -1,7 +1,7 @@
 import cv2
 import cvzone
 import numpy as np
-from config import buttonColor, textColor, button_size, caps_lock
+from config import buttonColor, textColor, button_size, CAPS_LOCK
 
 class Button():
     def __init__(self, pos, text, size=button_size, action=None):
@@ -15,7 +15,7 @@ class Button():
         w, h = self.size
         cvzone.cornerRect(img, (x, y, w, h), 20, rt=3)
         display_text = self.text
-        if caps_lock and len(self.text) == 1 and self.text.isaplha():
+        if CAPS_LOCK and len(self.text) == 1 and self.text.isaplha():
             print(1)
             display_text = self.text.upper()
         cv2.rectangle(img, self.pos, (x + w, y + h), buttonColor, cv2.FILLED)

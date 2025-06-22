@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from button import Button
 from pynput.keyboard import Controller, Key
-from config import button_interval, button_size, caps_lock
+from config import button_interval, button_size, CAPS_LOCK
 
 keyboard = Controller()
 
@@ -22,7 +22,7 @@ custom_keys = {
     "Caps" : {
         "key" : "Caps", 
         "size": [np.int32(button_size[0]*1.75), button_size[1]],
-        "action": [lambda: keyboard.press(Key.caps_lock), lambda: keyboard.release(Key.caps_lock), lambda: globals().update(caps_lock = not caps_lock)]},
+        "action": [lambda: keyboard.press(Key.caps_lock), lambda: keyboard.release(Key.caps_lock), lambda: globals().update(caps_lock = not CAPS_LOCK)]},
     "Shift" : {
         "key" : "Shift", 
         "size": [np.int32(button_size[0]*2.25), button_size[1]],

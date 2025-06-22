@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from algorithm_setting import LowPassFilter, ExtendedKalmanFilterWrapper, MovingAverageFilter, KalmanFilterWrapper, PerformanceEvaluator
 
 # Generate simulation data at 30fps (600 frames = 20 seconds), simulating gesture acceleration and lighting effects
-def generate_simulation_data(num_points=600):  # Modified to 30fps
-    t = np.linspace(0, 20, num_points)
+def generate_simulation_data(num_points=300):  # Modified to 30fps
+    t = np.linspace(0, 10, num_points)
     
     # Generate a non-linear trajectory (Lissajous curve) with acceleration information added
     acceleration = 0.1 * np.sin(0.2 * t)  # Simulate acceleration
