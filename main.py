@@ -74,7 +74,8 @@ class GestureControlApp:
         x1, y1 = lmList[self.indexLm][0], lmList[self.indexLm][1]
         x2, y2 = lmList[self.clickLm][0], lmList[self.clickLm][1]
 
-        clickThreshold = 25 + (bboxInfo[2] + bboxInfo[3]) * dynamic_scale
+        # clickThreshold_old = 25 + (bboxInfo[2] + bboxInfo[3]) * dynamic_scale
+        clickThreshold = 25 + np.sqrt(bboxInfo[2] * bboxInfo[3]) * dynamic_scale
         l, _, _ = self.detector.findDistance((x1, y1), (x2, y2), img)
         return l < clickThreshold and time.time() - self.last_click_time >= click_interval
 
@@ -229,7 +230,7 @@ class GestureControlApp:
                             button.draw(img, buttonColor=buttonHoverColor, textColor=textColor, fontScale=4, thickness=4)
 
                             # Click button only when index and middle fingers raised
-                            if self.is_clicked(lmList, bboxInfo, img) and self.fingers_up[0] and self.fingers_up[1]:
+                            if self.is_clicked(lmList, bboxInfo, img):# and self.fingers_up[0] and self.fingers_up[1]:
                                 if debugMode:
                                     print("Clicked:", button.text)
                                 self.last_click_time = time.time()
@@ -240,6 +241,12 @@ class GestureControlApp:
                                 self.finalText += button.text
 
                     cv2.circle(img, midPoint, 8, (255, 255, 255), 2)
+                    # if debugMode:
+                    #     x1, y1 = lmList[self.indexLm][0], lmList[self.indexLm][1]
+                    #     x2, y2 = lmList[self.clickLm][0], lmList[self.clickLm][1]
+                    #     l, _, _ = self.detector.findDistance((x1, y1), (x2, y2), img)
+                        
+
           
             cv2.imshow(f"Image", img)
             if cv2.waitKey(1) & 0xFF == ord('q'):
